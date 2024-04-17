@@ -42,6 +42,11 @@ visit https://zxespectrum.speccy.org/contacto
 
 using namespace std;
 
+// Tape file types
+#define TAPE_FTYPE_EMPTY 0
+#define TAPE_FTYPE_TAP 1
+#define TAPE_FTYPE_TZX 2
+
 // Tape status definitions
 #define TAPE_STOPPED 0
 #define TAPE_LOADING 1
@@ -69,9 +74,35 @@ using namespace std;
 #define TAPE_BIT0_PULSELEN 855 // tstates = 244 ms, lenght of pulse for bit 0
 #define TAPE_BIT1_PULSELEN 1710 // tstates = 488 ms, lenght of pulse for bit 1
 
-//#define TAPE_BLK_PAUSELEN 3500000UL // 1 second of pause between blocks
-#define TAPE_BLK_PAUSELEN 1750000UL // 1/2 second of pause between blocks
-//#define TAPE_BLK_PAUSELEN 875000UL // 1/4 second of pause between blocks
+#define TAPE_BLK_PAUSELEN 3500000UL // 1000 ms. of pause between blocks
+//#define TAPE_BLK_PAUSELEN 1750000UL // 500 ms. of pause between blocks
+//#define TAPE_BLK_PAUSELEN 875000UL // 250 ms. of pause between blocks
+
+// Tape sync phases lenght in microseconds for Rodolfo Guerra ROMs
+#define TAPE_SYNC_LEN_RG 1408 // 620 microseconds for 2168 tStates (48K)
+#define TAPE_SYNC1_LEN_RG 397 // 190 microseconds for 667 tStates (48K)
+#define TAPE_SYNC2_LEN_RG 317 // 210 microseconds for 735 tStates (48K)
+
+#define TAPE_HDR_LONG_RG 4835   // Header sync lenght in pulses
+#define TAPE_HDR_SHORT_RG 1930  // Data sync lenght in pulses
+
+#define TAPE_BIT0_PULSELEN_RG 325 // tstates = 244 ms, lenght of pulse for bit 0
+#define TAPE_BIT1_PULSELEN_RG 649 // tstates = 488 ms, lenght of pulse for bit 1
+
+#define TAPE_BLK_PAUSELEN_RG 1113000UL // 318 ms.
+
+// Tape sync phases lenght TEST
+#define TAPE_SYNC_LEN_TEST 952 // 620 microseconds for 2168 tStates (48K)
+#define TAPE_SYNC1_LEN_TEST 0 // 190 microseconds for 667 tStates (48K)
+#define TAPE_SYNC2_LEN_TEST 0 // 210 microseconds for 735 tStates (48K)
+
+#define TAPE_HDR_LONG_TEST  369   // Header sync lenght in pulses
+#define TAPE_HDR_SHORT_TEST 369   // Data sync lenght in pulses
+
+#define TAPE_BIT0_PULSELEN_TEST 79 // tstates = 244 ms, lenght of pulse for bit 0
+#define TAPE_BIT1_PULSELEN_TEST 79 // tstates = 488 ms, lenght of pulse for bit 1
+
+#define TAPE_BLK_PAUSELEN_TEST 7000000UL
 
 class TapeBlock
 {
@@ -94,7 +125,6 @@ public:
     uint32_t StartPosition; // Start point of this block?
     // uint16_t BlockLength;
 };
-
 class Tape
 {
 public:
@@ -103,6 +133,7 @@ public:
     static FILE *tape;
     static string tapeFileName;
     static string tapeSaveName;
+    static int tapeFileType;
     static uint8_t tapeEarBit;
     static uint8_t tapeStatus;
     static uint8_t SaveStatus;
@@ -113,16 +144,35 @@ public:
     static uint32_t tapePlayOffset;    
     static size_t tapeFileSize;
  
+    // Tape timing values
+    static uint16_t tapeSyncLen;
+    static uint16_t tapeSync1Len;
+    static uint16_t tapeSync2Len;
+    static uint16_t tapeBit0PulseLen; // lenght of pulse for bit 0
+    static uint16_t tapeBit1PulseLen; // lenght of pulse for bit 1
+    static uint16_t tapeHdrLong;  // Header sync lenght in pulses
+    static uint16_t tapeHdrShort; // Data sync lenght in pulses
+    static uint32_t tapeBlkPauseLen; 
+    static uint8_t tapeLastBitUsedBytes;
+
     static std::vector<TapeBlock> TapeListing;
 
     static void Init();
-    static void Open(string name);
+    static void LoadTape(string mFile);
+    static void TAP_Open(string name);
+    static void TZX_Open(string name);
     static void TAP_Play();
+    static void TZX_Play();
     static void TAP_Stop();    
     static void TAP_Read();
+    static void (*TZX_Read)();
+    static void TZX_Read_0x10();
+    static void TZX_Read_0x11();
+    static void TZXGetNextBlock();    
     static bool FlashLoad();
     static void Save();
     static uint32_t CalcTapBlockPos(int block);
+    static string tapeBlockReadData(int Blocknum);
 
 };
 

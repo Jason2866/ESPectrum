@@ -58,8 +58,9 @@ using namespace std;
 #define ESP_AUDIO_SAMPLES_PENTAGON  640
 #define ESP_AUDIO_SAMPLES_DIV_PENTAGON  7
 
-#define ESP_DEFAULT_VOLUME -8
-
+#define ESP_VOLUME_DEFAULT -8
+#define ESP_VOLUME_MAX 0
+#define ESP_VOLUME_MIN -16
 class ESPectrum
 {
 public:
@@ -75,6 +76,10 @@ public:
     static void readKbdJoy();
     static fabgl::PS2Controller PS2Controller;
     static fabgl::VirtualKey JoyVKTranslation[24];
+    static fabgl::VirtualKey VK_ESPECTRUM_FIRE1;
+    static fabgl::VirtualKey VK_ESPECTRUM_FIRE2;
+    static fabgl::VirtualKey VK_ESPECTRUM_TAB;
+    static fabgl::VirtualKey VK_ESPECTRUM_GRAVEACCENT;
 
     // Audio
     static void BeeperGetSample();
@@ -94,13 +99,22 @@ public:
     static bool AY_emu;
     static int Audio_freq;
 
+    static bool ESP_delay;
     static int sync_cnt;    
 
     static int TapeNameScroller;
 
+    static int64_t ts_start;
     static int64_t target;
+    static double totalseconds;
+    static double totalsecondsnodelay;
+    static int64_t elapsed;
+    static int64_t idle;
+    static int ESPoffset;
 
-    static int ESPoffset; // Testing
+    static int ESPtestvar;
+    static int ESPtestvar1;
+    static int ESPtestvar2;        
 
     static volatile bool vsync;
 

@@ -39,6 +39,7 @@ visit https://zxespectrum.speccy.org/contacto
 #include "FileUtils.h"
 #include "messages.h"
 #include "Config.h"
+#include "OSDMain.h"
 #include "esp_vfs.h"
 
 void CaptureToBmp()
@@ -55,7 +56,7 @@ void CaptureToBmp()
 
     // framebuffer size
     int w = VIDEO::vga.xres;
-    int h = VIDEO::vga.yres;
+    int h = OSD::scrH;
 
     // number of uint32_t words
     int count = w >> 2;
@@ -71,6 +72,15 @@ void CaptureToBmp()
     string filelist;
     string scrdir = (string) MOUNT_POINT_SD + DISK_SCR_DIR;
 
+    // Create dir if it doesn't exist
+    struct stat stat_buf;
+    if (stat(scrdir.c_str(), &stat_buf) != 0) {
+        if (mkdir(scrdir.c_str(),0775) != 0) {
+            printf("Capture BMP: problem creating capture dir\n");
+            return;
+        }
+    }
+    
     DIR* dir = opendir(scrdir.c_str());
     if (dir == NULL) {
         printf("Capture BMP: problem accessing capture dir\n");
