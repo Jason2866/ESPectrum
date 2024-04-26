@@ -4,7 +4,6 @@ on:
   repository_dispatch:
   workflow_dispatch:
   push:
-    branches: gh_actions
     paths-ignore:
     - '.github/**' # Ignore changes towards the .github directory
 
@@ -19,8 +18,6 @@ jobs:
           - ESPectrum
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: gh_actions
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
