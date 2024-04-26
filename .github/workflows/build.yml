@@ -31,4 +31,6 @@ jobs:
           pip install wheel
           pip install -U https://github.com/platformio/platformio/archive/develop.zip
       - name: Run PlatformIO
-        run: platformio run -e ${{ matrix.variant }}
+        run: |
+          export IDF_COMPONENT_MANAGER=1
+          platformio run -e ${{ matrix.variant }}
