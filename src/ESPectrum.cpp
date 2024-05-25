@@ -2,7 +2,7 @@
 
 ESPectrum, a Sinclair ZX Spectrum emulator for Espressif ESP32 SoC
 
-Copyright (c) 2023 Víctor Iborra [Eremus] and David Crespo [dcrespo3d]
+Copyright (c) 2023, 2024 Víctor Iborra [Eremus] and 2023 David Crespo [dcrespo3d]
 https://github.com/EremusOne/ZX-ESPectrum-IDF
 
 Based on ZX-ESPectrum-Wiimote
@@ -165,6 +165,78 @@ int ESPectrum::ESPoffset = 0;
 int ESPectrum::ESPtestvar = 0;
 int ESPectrum::ESPtestvar1 = 0;
 int ESPectrum::ESPtestvar2 = 0;
+
+void ShowStartMsg() {
+    
+    fabgl::VirtualKeyItem Nextkey;
+
+    VIDEO::vga.clear(zxColor(7,0));
+
+    OSD::drawOSD(false);
+
+    VIDEO::vga.fillRect(Config::aspect_16_9 ? 60 : 40,Config::aspect_16_9 ? 12 : 32,240,50,zxColor(0, 0));            
+
+    // Decode Logo in EBF8 format
+    uint8_t *logo = (uint8_t *)ESPectrum_logo;
+    int pos_x = Config::aspect_16_9 ? 86 : 66;
+    int pos_y = Config::aspect_16_9 ? 23 : 43;
+    int logo_w = (logo[5] << 8) + logo[4]; // Get Width
+    int logo_h = (logo[7] << 8) + logo[6]; // Get Height
+    logo+=8; // Skip header
+    for (int i=0; i < logo_h; i++)
+        for(int n=0; n<logo_w; n++)
+            VIDEO::vga.dotFast(pos_x + n,pos_y + i,logo[n+(i*logo_w)]);
+
+    OSD::osdAt(7, 1);
+    VIDEO::vga.setTextColor(zxColor(7, 1), zxColor(1, 0));
+    VIDEO::vga.print(Config::lang ? StartMsg[0] : StartMsg[1]);
+
+    VIDEO::vga.setTextColor(zxColor(16,0), zxColor(1, 0));
+    OSD::osdAt(7, Config::lang ? 28 : 25);          
+    VIDEO::vga.print("ESP");
+    OSD::osdAt(9, 1);          
+    VIDEO::vga.print("ESP");
+    OSD::osdAt(13, 13);          
+    VIDEO::vga.print("ESP");
+
+    OSD::osdAt(17, 4);          
+    VIDEO::vga.setTextColor(zxColor(3, 1), zxColor(1, 0));
+    VIDEO::vga.print("https://patreon.com/ESPectrum");
+
+    char msg[38];
+    
+    for (int i=20; i >= 0; i--) {
+        OSD::osdAt(19, 1);          
+        sprintf(msg,Config::lang ? "Este mensaje se cerrar" "\xA0" " en %02d segundos" : "This message will close in %02d seconds",i);
+        VIDEO::vga.setTextColor(zxColor(7, 0), zxColor(1, 0));
+        VIDEO::vga.print(msg);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+
+    VIDEO::vga.clear(zxColor(7,0));
+
+    // Disable StartMsg
+    Config::StartMsg = false;
+    Config::save("StartMsg");
+
+    // while (1) {
+
+    //     if (ZXKeyb::Exists) ZXKeyb::ZXKbdRead();
+
+    //     ESPectrum::readKbdJoy();
+
+    //     if (ESPectrum::PS2Controller.keyboard()->virtualKeyAvailable()) {
+    //         if (ESPectrum::readKbd(&Nextkey)) {
+    //             if(!Nextkey.down) continue;
+    //             if (Nextkey.vk == fabgl::VK_F1 || Nextkey.vk == fabgl::VK_ESCAPE || Nextkey.vk == fabgl::VK_RETURN || Nextkey.vk == fabgl::VK_JOY1A || Nextkey.vk == fabgl::VK_JOY1B || Nextkey.vk == fabgl::VK_JOY2A || Nextkey.vk == fabgl::VK_JOY2B) break;
+    //         }
+    //     }
+
+    //     vTaskDelay(5 / portTICK_PERIOD_MS);
+
+    // }
+
+}
 
 void showMemInfo(const char* caption = "ZX-ESPectrum-IDF") {
 
@@ -478,16 +550,31 @@ void ESPectrum::setup()
     // MEMORY SETUP
     //=======================================================================================
 
-    for (int i=0; i < 8; i++) {
-        MemESP::ram[i] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
-        if (MemESP::ram[i] == NULL)
-            if (Config::slog_on) printf("ERROR! Unable to allocate ram%d\n",i);
-    }
+    // for (int i=0; i < 8; i++) {
+    //     MemESP::ram[i] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
+    //     if (MemESP::ram[i] == NULL)
+    //         if (Config::slog_on) printf("ERROR! Unable to allocate ram%d\n",i);
+    // }
 
-    // MemESP::ram[5] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
-    // MemESP::ram[0] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
-    // MemESP::ram[2] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
-    // MemESP::ram[7] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
+    MemESP::ram[5] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
+    MemESP::ram[0] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
+
+    // MemESP::ram[0] = (unsigned char *) heap_caps_calloc(0x8000, sizeof(unsigned char), MALLOC_CAP_8BIT);
+    // MemESP::ram[2] = ((unsigned char *) MemESP::ram[0]) + 0x4000;
+    // MemESP::ram[0] = (unsigned char *) staticMemPage0;
+    // MemESP::ram[2] = ((unsigned char *) staticMemPage0) + 0x4000;
+
+    MemESP::ram[2] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
+    MemESP::ram[7] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
+
+    // MemESP::ram[1] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
+    // MemESP::ram[3] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
+
+    MemESP::ram[1] = (unsigned char *) heap_caps_calloc(0x8000, sizeof(unsigned char), MALLOC_CAP_8BIT);
+    MemESP::ram[3] = ((unsigned char *) MemESP::ram[1]) + 0x4000;
+
+    MemESP::ram[4] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
+    MemESP::ram[6] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT);
 
     // MemESP::ram[1] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
     // MemESP::ram[3] = (unsigned char *) heap_caps_calloc(0x4000, sizeof(unsigned char), MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
@@ -525,6 +612,8 @@ void ESPectrum::setup()
     VIDEO::Reset();
     
     if (Config::slog_on) showMemInfo("VGA started");
+
+    if (Config::StartMsg) ShowStartMsg(); // Show welcome message
 
     //=======================================================================================
     // INIT FILESYSTEM
@@ -1235,10 +1324,10 @@ IRAM_ATTR void ESPectrum::processKeyboard() {
             bitWrite(PS2cols[4], 4, (!Kbd->isVKDown(fabgl::VK_6)) & (!Kbd->isVKDown(fabgl::VK_CARET)) & (j[6]));
 
             bitWrite(PS2cols[5], 0, (!Kbd->isVKDown(fabgl::VK_P)) & (!Kbd->isVKDown(fabgl::VK_p))
-                                &   (!Kbd->isVKDown(fabgl::VK_BACKSLASH)) // Double quote            
+                                &   (!Kbd->isVKDown(fabgl::VK_QUOTE)) // Double quote            
                                 );
             bitWrite(PS2cols[5], 1, (!Kbd->isVKDown(fabgl::VK_O)) & (!Kbd->isVKDown(fabgl::VK_o))
-                                &   (!Kbd->isVKDown(fabgl::VK_QUOTE)) // Semicolon
+                                &   (!Kbd->isVKDown(fabgl::VK_SEMICOLON)) // Semicolon
                                 );
             bitWrite(PS2cols[5], 2, (!Kbd->isVKDown(fabgl::VK_I)) & (!Kbd->isVKDown(fabgl::VK_i)));
             bitWrite(PS2cols[5], 3, (!Kbd->isVKDown(fabgl::VK_U)) & (!Kbd->isVKDown(fabgl::VK_u)));
@@ -1257,8 +1346,8 @@ IRAM_ATTR void ESPectrum::processKeyboard() {
                                 &   (!Kbd->isVKDown(fabgl::VK_RCTRL))
                                 &   (!Kbd->isVKDown(fabgl::VK_COMMA)) // Comma
                                 &   (!Kbd->isVKDown(fabgl::VK_PERIOD)) // Period
-                                &   (!Kbd->isVKDown(fabgl::VK_QUOTE)) // Semicolon
-                                &   (!Kbd->isVKDown(fabgl::VK_BACKSLASH)) // Double quote
+                                &   (!Kbd->isVKDown(fabgl::VK_SEMICOLON)) // Semicolon
+                                &   (!Kbd->isVKDown(fabgl::VK_QUOTE)) // Double quote
                                 &   (!Kbd->isVKDown(VK_ESPECTRUM_TAB)) // Extended mode                                                                      
                                 ); // SYMBOL SHIFT
             bitWrite(PS2cols[7], 2, (!Kbd->isVKDown(fabgl::VK_M)) & (!Kbd->isVKDown(fabgl::VK_m))

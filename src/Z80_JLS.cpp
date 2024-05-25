@@ -1058,23 +1058,12 @@ IRAM_ATTR void Z80::incRegR(uint8_t inc) {
 
 IRAM_ATTR void Z80::execute() {
 
-    if (!(CPU::tstates & 0xf)) {
-        if (Tape::tapeStatus == TAPE_LOADING) {
-        // if (Tape::tapePhase == TAPE_PHASE_DATA) {
-            if (Tape::tapeFileType == 1)
-                Tape::TAP_Read();
-            else 
-                Tape::TZX_Read();
-        }
-    }
-
-    // if (REG_PC == 0x6060) {
-    //     // Tape::TAP_Stop();
-    //     printf("AF: %04" PRIx16 "\n",Z80::getRegAF());
-    //     printf("I: %02x\n",(unsigned int)Z80::getRegI());        
-    //     printf("R: %02x\n",(unsigned int)Z80::getRegR());                
-    //     printf("HL: %04" PRIx16 "\n",Z80::getRegHL());
-    // }
+    // // if (!(CPU::tstates & 0xf)) {
+    //     if (Tape::tapeStatus == TAPE_LOADING) {
+    //     // if (Tape::tapePhase == TAPE_PHASE_DATA) {
+    //         Tape::Read();
+    //     }
+    // // }
 
     uint8_t pg = REG_PC >> 14;
     VIDEO::Draw_Opcode(MemESP::ramContended[pg]);
@@ -1114,16 +1103,6 @@ IRAM_ATTR void Z80::execute() {
 IRAM_ATTR void Z80::exec_nocheck() {
 
     while (CPU::tstates < CPU::stFrame) {
-
-        if (!(CPU::tstates & 0xf)) {
-            if (Tape::tapeStatus == TAPE_LOADING) {
-            // if (Tape::tapePhase == TAPE_PHASE_DATA) {
-                if (Tape::tapeFileType == 1)
-                    Tape::TAP_Read();
-                else 
-                    Tape::TZX_Read();
-            }
-        }
 
         uint8_t pg = REG_PC >> 14;
         VIDEO::Draw_Opcode(MemESP::ramContended[pg]);
@@ -2328,7 +2307,7 @@ IRAM_ATTR void Z80::decodeOpcodebf()
 
         // printf("Trap Load!\n");
 
-        if ((Config::flashload) && (Tape::tapeFileName != "none") && (Tape::tapeStatus != TAPE_LOADING)) {
+        if ((Config::flashload) && (Tape::tapeFileType == TAPE_FTYPE_TAP) && (Tape::tapeFileName != "none") && (Tape::tapeStatus != TAPE_LOADING)) {
             // printf("Loading tape %s\n",Tape::tapeFileName.c_str());
             if (Tape::FlashLoad()) REG_PC = 0x5e2;
         }
