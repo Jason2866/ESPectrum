@@ -1,0 +1,31 @@
+name: Build
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+    - '.github/**' # Ignore changes towards the .github directory
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        variant:
+          - psram
+          - nopsram
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install -U https://github.com/platformio/platformio/archive/develop.zip
+      - name: Run PlatformIO
+        run: |
+          platformio run -e ${{ matrix.variant }}
