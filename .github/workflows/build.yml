@@ -11,7 +11,6 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    continue-on-error: true
     strategy:
       matrix:
         variant:
@@ -21,14 +20,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install wheel
-          #pip install idf-component-manager
-          pip install -U https://github.com/platformio/platformio/archive/develop.zip
+          python -m pip install uv
+          uv pip install Platformio
       - name: Run PlatformIO
-        run: |
-          #export IDF_COMPONENT_MANAGER=1
-          platformio run -e ${{ matrix.variant }}
+        run: platformio run -e ${{ matrix.variant }}
