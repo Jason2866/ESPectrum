@@ -11,7 +11,6 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    continue-on-error: true
     strategy:
       matrix:
         variant:
@@ -22,10 +21,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install -U https://github.com/platformio/platformio/archive/develop.zip
+          python -m pip install uv
+          uv pip install --system setuptools==80.9.0
+          uv pip install --system platformio
       - name: Run PlatformIO
-        run: |
-          platformio run -e ${{ matrix.variant }}
+        run: platformio run -e ${{ matrix.variant }}
