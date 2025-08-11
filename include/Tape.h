@@ -2,11 +2,11 @@
 
 ESPectrum, a Sinclair ZX Spectrum emulator for Espressif ESP32 SoC
 
-Copyright (c) 2023, 2024 Víctor Iborra [Eremus] and 2023 David Crespo [dcrespo3d]
-https://github.com/EremusOne/ZX-ESPectrum-IDF
+Copyright (c) 2023-2025 Víctor Iborra [Eremus] and 2023 David Crespo [dcrespo3d]
+https://github.com/EremusOne/ESPectrum
 
 Based on ZX-ESPectrum-Wiimote
-Copyright (c) 2020, 2022 David Crespo [dcrespo3d]
+Copyright (c) 2020-2022 David Crespo [dcrespo3d]
 https://github.com/dcrespo3d/ZX-ESPectrum-Wiimote
 
 Based on previous work by Ramón Martinez and Jorge Fuertes
@@ -28,8 +28,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-To Contact the dev team you can write to zxespectrum@gmail.com or 
-visit https://zxespectrum.speccy.org/contacto
+To Contact the dev team you can write to zxespectrum@gmail.com
 
 */
 
@@ -106,15 +105,18 @@ using namespace std;
 
 #define TAPE_LISTING_DIV 16
 
-#define FACTOR128K 1.013376779 // Pulse length compensation for Spectrum 128K
-// #define FACTOR128K 1 // Disable pulse length compensation for Spectrum 128K
+#define FACTOR128K  1.013376779 // Pulse length compensation for Spectrum 128K
+#define FACTORALUTK 1.021591929 // Pulse length compensation for Microdigital ULA
 
-#define TAPEHIGH 1
-#define TAPELOW 0
+// #define TAPEHIGH 1
+// #define TAPELOW 0
+
+#define TAPEHIGH 0
+#define TAPELOW 1
 
 #define CHUNK_SIZE 1024
 struct TZXBlock {
-    uint8_t BlockType;   
+    uint8_t BlockType;
     char FileName[11];
     uint16_t PauseLenght;
     uint32_t BlockLenght;
@@ -149,25 +151,26 @@ public:
 
     // Tape
     static FILE *tape;
-    static FILE *cswBlock;    
+    static FILE *cswBlock;
     static string tapeFileName;
-    static string tapeSaveName;
+    static string tapeFilePath;
     static int tapeFileType;
     static uint8_t tapeEarBit;
     static uint8_t tapeStatus;
     static uint8_t SaveStatus;
     static uint8_t romLoading;
-    static int tapeCurBlock;  
-    static int tapeNumBlocks;  
+    static int tapeCurBlock;
+    static int tapeNumBlocks;
     static uint32_t tapebufByteCount;
-    static uint32_t tapePlayOffset;    
+    static uint32_t tapePlayOffset;
     static size_t tapeFileSize;
- 
-    static uint8_t tapePhase;    
+    static bool tapeIsReadOnly;
+    static uint8_t tapePhase;
 
     static std::vector<TapeBlock> TapeListing;
 
     static void Init();
+    static void TAP_setBlockTimings();
     static void LoadTape(string mFile);
     static void Play();
     static void Stop();
@@ -175,20 +178,35 @@ public:
     static bool FlashLoad();
     static void Save();
 
+    static void Eject();
+
     static uint32_t CalcTapBlockPos(int block);
-    static uint32_t CalcTZXBlockPos(int block);    
+    static uint32_t CalcTZXBlockPos(int block);
     static string tapeBlockReadData(int Blocknum);
-    static string tzxBlockReadData(int Blocknum);    
+    static string tzxBlockReadData(int Blocknum);
+
+    static std::vector<int> selectedBlocks;
+
+    static TapeBlock::BlockType getBlockType(int Blocknum);
+    static void selectBlockToggle(int block);
+    static bool isSelectedBlock(int block);
+    static void removeSelectedBlocks();
+    static void moveSelectedBlocks(int targetPosition);
+    static string getBlockName(int block);
+    static void renameBlock(int block, string new_name);
+
+    static double tapeCompensation;
 
 private:
 
     static void (*GetBlock)();
 
-    static void TAP_Open(string name);
+    static void TAP_Open(string name, string path);
+    static void TAP_getBlockData();
     static void TAP_ReOpen();
-    static void TAP_GetBlock();    
-    static void TZX_Open(string name);
-    static void TZX_GetBlock();    
+    static void TAP_GetBlock();
+    static void TZX_Open(string name, string path);
+    static void TZX_GetBlock();
     static void TZX_BlockLen(TZXBlock &blockdata);
 
     static int inflateCSW(int blocknumber, long startPos, long data_length);
@@ -201,7 +219,7 @@ private:
     static uint16_t tapeBit1PulseLen; // lenght of pulse for bit 1
     static uint16_t tapeHdrLong;  // Header sync lenght in pulses
     static uint16_t tapeHdrShort; // Data sync lenght in pulses
-    static uint32_t tapeBlkPauseLen; 
+    static uint32_t tapeBlkPauseLen;
     static uint8_t tapeLastByteUsedBits;
     static uint8_t tapeEndBitMask;
     static uint32_t tapeNext;
@@ -222,7 +240,7 @@ private:
     static int callBlock;
 
     static int CSW_SampleRate;
-    static int CSW_PulseLenght;    
+    static int CSW_PulseLenght;
     static uint8_t CSW_CompressionType;
     static uint32_t CSW_StoredPulses;
 
@@ -235,13 +253,12 @@ private:
     static uint16_t asd;
     static uint32_t curGDBSymbol;
     static uint8_t curGDBPulse;
-    static uint8_t GDBsymbol;    
-    static uint8_t nb; 
-    static uint8_t curBit;       
-    static bool GDBEnd;     
+    static uint8_t GDBsymbol;
+    static uint8_t nb;
+    static uint8_t curBit;
+    static bool GDBEnd;
     static Symdef* SymDefTable;
 
 };
-
 
 #endif

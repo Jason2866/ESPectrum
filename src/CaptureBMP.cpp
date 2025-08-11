@@ -2,11 +2,11 @@
 
 ESPectrum, a Sinclair ZX Spectrum emulator for Espressif ESP32 SoC
 
-Copyright (c) 2023, 2024 Víctor Iborra [Eremus] and 2023 David Crespo [dcrespo3d]
-https://github.com/EremusOne/ZX-ESPectrum-IDF
+Copyright (c) 2023-2025 Víctor Iborra [Eremus] and 2023 David Crespo [dcrespo3d]
+https://github.com/EremusOne/ESPectrum
 
 Based on ZX-ESPectrum-Wiimote
-Copyright (c) 2020, 2022 David Crespo [dcrespo3d]
+Copyright (c) 2020-2022 David Crespo [dcrespo3d]
 https://github.com/dcrespo3d/ZX-ESPectrum-Wiimote
 
 Based on previous work by Ramón Martinez and Jorge Fuertes
@@ -28,8 +28,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-To Contact the dev team you can write to zxespectrum@gmail.com or 
-visit https://zxespectrum.speccy.org/contacto
+To Contact the dev team you can write to zxespectrum@gmail.com
 
 */
 
@@ -38,16 +37,20 @@ visit https://zxespectrum.speccy.org/contacto
 #include "Video.h"
 #include "FileUtils.h"
 #include "messages.h"
-#include "Config.h"
+#include "ESPConfig.h"
 #include "OSDMain.h"
 #include "esp_vfs.h"
+#include "AudioIn.h"
 
-void CaptureToBmp()
-{
+void CaptureToBmp() {
+
+    if (AudioIn::Status == AUDIOIN_PLAY) return; // Disabled if audio-in is active
+
+    if (!FileUtils::isSDReady()) return;
 
     char filename[] = "ESP00000.bmp";
 
-    unsigned char bmp_header2[BMP_HEADER2_SIZE] = { 
+    unsigned char bmp_header2[BMP_HEADER2_SIZE] = {
         0xaa,0xaa,0xaa,0xaa,0xbb,
         0xbb,0xbb,0xbb,0x01,0x00,
         0x08,0x00,0x00,0x00,0x00,
@@ -72,19 +75,19 @@ void CaptureToBmp()
     string filelist;
     string scrdir = (string) MOUNT_POINT_SD + DISK_SCR_DIR;
 
-    FileUtils::remountSDCardIfNeeded();
-
     // Create dir if it doesn't exist
     struct stat stat_buf;
     if (stat(scrdir.c_str(), &stat_buf) != 0) {
         if (mkdir(scrdir.c_str(),0775) != 0) {
+            delete[] linebuf;
             printf("Capture BMP: problem creating capture dir\n");
             return;
         }
     }
-    
+
     DIR* dir = opendir(scrdir.c_str());
     if (dir == NULL) {
+        delete[] linebuf;
         printf("Capture BMP: problem accessing capture dir\n");
         return;
     }
@@ -107,8 +110,8 @@ void CaptureToBmp()
 
     if (Config::slog_on) printf("BMP number -> %.5d\n",bmpnumber);
 
-    sprintf((char *)filename,"ESP%.5d.bmp",bmpnumber);    
-        
+    sprintf((char *)filename,"ESP%.5d.bmp",bmpnumber);
+
     // Full filename. Save only to SD.
     std::string fullfn = (string) MOUNT_POINT_SD + DISK_SCR_DIR + "/" + filename;
 

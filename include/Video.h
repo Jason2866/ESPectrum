@@ -2,11 +2,11 @@
 
 ESPectrum, a Sinclair ZX Spectrum emulator for Espressif ESP32 SoC
 
-Copyright (c) 2023, 2024 Víctor Iborra [Eremus] and 2023 David Crespo [dcrespo3d]
-https://github.com/EremusOne/ZX-ESPectrum-IDF
+Copyright (c) 2023-2025 Víctor Iborra [Eremus] and 2023 David Crespo [dcrespo3d]
+https://github.com/EremusOne/ESPectrum
 
 Based on ZX-ESPectrum-Wiimote
-Copyright (c) 2020, 2022 David Crespo [dcrespo3d]
+Copyright (c) 2020-2022 David Crespo [dcrespo3d]
 https://github.com/dcrespo3d/ZX-ESPectrum-Wiimote
 
 Based on previous work by Ramón Martinez and Jorge Fuertes
@@ -28,8 +28,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-To Contact the dev team you can write to zxespectrum@gmail.com or 
-visit https://zxespectrum.speccy.org/contacto
+To Contact the dev team you can write to zxespectrum@gmail.com
 
 */
 
@@ -44,24 +43,47 @@ visit https://zxespectrum.speccy.org/contacto
 #define SPEC_H 192
 
 #define TSTATES_PER_LINE 224
+#define TSTATES_PER_LINE_TK_50 228
+#define TSTATES_PER_LINE_TK_60 228
 #define TSTATES_PER_LINE_128 228
 #define TSTATES_PER_LINE_PENTAGON 224
 
 #define TS_SCREEN_48           14335  // START OF ULA DRAW PAPER 48K
+#define TS_SCREEN_TK_50        14687  // START OF ULA DRAW PAPER TK 50HZ
+#define TS_SCREEN_TK_60        8759   // START OF ULA DRAW PAPER TK 60HZ
 #define TS_SCREEN_128          14361  // START OF ULA DRAW PAPER 128K
 #define TS_SCREEN_PENTAGON     17983  // START OF ULA DRAW PAPER PENTAGON
 
 #define TS_BORDER_320x240 8948  // START OF BORDER 48
+#define TS_BORDER_320x240_TK_50  9201 // START OF BORDER TK 50HZ
+#define TS_BORDER_320x240_TK_60  3273 // START OF BORDER TK 60HZ
 #define TS_BORDER_320x240_128 8878  // START OF BORDER 128
 #define TS_BORDER_320x240_PENTAGON 12595  // START OF BORDER PENTAGON
 
-#define TS_BORDER_360x200 13428  // START OF BORDER 48
-#define TS_BORDER_360x200_128 13438  // START OF BORDER 128
-#define TS_BORDER_360x200_PENTAGON 17075  // START OF BORDER PENTAGON
+// // TS_BORDER_320X240 + (TSTATES_PER_LINE * 20)
+// #define TS_BORDER_360x200 13428  // START OF BORDER 48
+// #define TS_BORDER_360x200_TK_50 13761  // START OF BORDER TK 50HZ
+// #define TS_BORDER_360x200_TK_60 7833  // START OF BORDER TK 60HZ
+// #define TS_BORDER_360x200_128 13438  // START OF BORDER 128
+// #define TS_BORDER_360x200_PENTAGON 17075  // START OF BORDER PENTAGON
+
+// TS_BORDER_320X240 + (TSTATES_PER_LINE * 20)
+#define TS_BORDER_360x200 13420  // START OF BORDER 48
+#define TS_BORDER_360x200_TK_50 13753  // START OF BORDER TK 50HZ
+#define TS_BORDER_360x200_TK_60 7825  // START OF BORDER TK 60HZ
+#define TS_BORDER_360x200_128 13430  // START OF BORDER 128
+#define TS_BORDER_360x200_PENTAGON 17067  // START OF BORDER PENTAGON
+
+// TS_BORDER_320X240 - (TSTATES_PER_LINE * 16) - 8
+#define TS_BORDER_352x272 5356  // START OF BORDER 48
+#define TS_BORDER_352x272_TK_50  5545 // START OF BORDER TK 50HZ
+#define TS_BORDER_352x224_TK_60  5089 // START OF BORDER TK 60HZ TS_BORDER_320X240 + (TSTATES_PER_LINE * 8) - 8
+#define TS_BORDER_352x272_128 5222  // START OF BORDER 128
+#define TS_BORDER_352x272_PENTAGON 9003  // START OF BORDER PENTAGON
 
 // Colors for 6 bit mode
-//                  //  BBGGRR 
-#define BLACK       0b00000000 
+//                  //  BBGGRR
+#define BLACK       0b00000000
 #define BLUE        0b00100000
 #define RED         0b00000010
 #define MAGENTA     0b00100010
@@ -81,39 +103,11 @@ visit https://zxespectrum.speccy.org/contacto
 
 #define NUM_SPECTRUM_COLORS 17
 
-#define NUM_CPC_COLORS 27
+const int redPins[] = {RED_PINS_6B};
+const int grePins[] = {GRE_PINS_6B};
+const int bluPins[] = {BLU_PINS_6B};
 
-// Colors for 6 bit mode
-//                          //  BBGGRR 
-#define CPC_BLACK           0b00000000      
-#define CPC_BLUE            0b00010000
-#define CPC_BRIGHTBLUE      0b00110000
-#define CPC_RED             0b00000001
-#define CPC_MAGENTA         0b00010001
-#define CPC_MAUVE           0b00110001
-#define CPC_BRIGHTRED       0b00000011
-#define CPC_PURPLE          0b00010011
-#define CPC_BRIGHTMAGENTA   0b00110011
-#define CPC_GREEN           0b00000100
-#define CPC_CYAN            0b00010100
-#define CPC_SKYBLUE         0b00110100
-#define CPC_YELLOW          0b00000101
-#define CPC_WHITE           0b00010101
-#define CPC_PASTELBLUE      0b00110101
-#define CPC_ORANGE          0b00000111
-#define CPC_PINK            0b00010111
-#define CPC_PASTELMAGENTA   0b00110111
-#define CPC_BRIGHTGREEN     0b00001100
-#define CPC_SEAGREEN        0b00011100
-#define CPC_BRIGHTCYAN      0b00111100
-#define CPC_LIME            0b00001101
-#define CPC_PASTELGREEN     0b00011101
-#define CPC_PASTELCYAN      0b00111101
-#define CPC_BRIGHTYELLOW    0b00001111
-#define CPC_PASTELYELLOW    0b00011111
-#define CPC_BRIGHTWHITE     0b00111111
-
-void PreparaPaletaColor();
+#define zxColor(color,bright) VIDEO::spectrum_colors[bright ? color + 8 : color]
 
 class VIDEO
 {
@@ -121,7 +115,7 @@ public:
 
   // Initialize video
   static void Init();
-    
+
   // Reset video
   static void Reset();
 
@@ -135,17 +129,18 @@ public:
   static void Blank_Snow_Opcode(bool contended);
   // 48 / 128
   static void MainScreen_Blank(unsigned int statestoadd, bool contended);
+  static void MainScreen_Blank_2A3(unsigned int statestoadd, bool contended);
   static void MainScreen_Blank_Opcode(bool contended);
+  static void MainScreen_Blank_Opcode_2A3(bool contended);
   static void MainScreen(unsigned int statestoadd, bool contended);
+  static void MainScreen_2A3(unsigned int statestoadd, bool contended);
   static void MainScreen_OSD(unsigned int statestoadd, bool contended);
-  static void MainScreen_Opcode(bool contended);
-  static void MainScreen_OSD_Opcode(bool contended);
+  static void MainScreen_OSD_2A3(unsigned int statestoadd, bool contended);
+    static void MainScreen_Opcode(bool contended);
   static void MainScreen_Blank_Snow(unsigned int statestoadd, bool contended);
   static void MainScreen_Blank_Snow_Opcode(bool contended);
   static void MainScreen_Snow(unsigned int statestoadd, bool contended);
   static void MainScreen_Snow_Opcode(bool contended);
-  
-  // static void DrawBorderFast();
 
   static void TopBorder_Blank();
   static void TopBorder();
@@ -158,13 +153,13 @@ public:
   static void TopBorder_Pentagon();
   static void MiddleBorder_Pentagon();
   static void BottomBorder_Pentagon();
-  static void BottomBorder_OSD_Pentagon();  
-  
+  static void BottomBorder_OSD_Pentagon();
+
   static void (*Draw)(unsigned int, bool);
   static void (*Draw_Opcode)(bool);
   static void (*Draw_OSD169)(unsigned int, bool);
   static void (*Draw_OSD43)();
-  
+
   static void (*DrawBorder)();
 
   static void vgataskinit(void *unused);
@@ -184,10 +179,14 @@ public:
   static bool brdChange;
   static bool brdnextframe;
   static uint32_t lastBrdTstate;
+  static uint8_t brdnextline;
+  static uint8_t brdlin_osdstart;
+  static uint8_t brdlin_osdend;
+  static uint8_t osdstartX;
 
   static uint8_t tStatesPerLine;
   static int tStatesScreen;
-  static int tStatesBorder;  
+  static int tStatesBorder;
 
   static uint8_t flashing;
   static uint8_t flash_ctr;
@@ -196,36 +195,28 @@ public:
   static uint8_t bmp1;
   static uint8_t att2;
   static uint8_t bmp2;
-  // static bool opCodeFetch;
 
   static uint8_t dispUpdCycle;
   static bool snow_att;
   static bool dbl_att;
   static uint8_t lastbmp;
-  static uint8_t lastatt;    
+  static uint8_t lastatt;
   static uint8_t snowpage;
   static uint8_t snowR;
   static bool snow_toggle;
-  
-  #ifdef DIRTY_LINES
-  static uint8_t dirty_lines[SPEC_H];
-  // static uint8_t linecalc[SPEC_H];
-  #endif // DIRTY_LINES
- 
+
   static uint8_t OSD;
 
   static uint32_t* SaveRect;
 
   static TaskHandle_t videoTaskHandle;
 
-  static int VsyncFinetune[2];
+  // static int VsyncFinetune[2];
+
+  static uint32_t VsyncTarget;
 
   static uint32_t framecnt; // Frames elapsed
 
-  static uint16_t cpc_colors[NUM_CPC_COLORS];
-
 };
-
-#define zxColor(color,bright) VIDEO::spectrum_colors[bright ? color + 8 : color]
 
 #endif // VIDEO_h
